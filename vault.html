@@ -51,6 +51,7 @@
         <h1 class="text-7xl text-center blood-text glitch mb-3" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
         <p class="text-center text-red-400 text-xl mb-12">Private Archive — Genesis Sigil Holders Only</p>
 
+        <!-- GATE -->
         <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
             <p class="text-red-500 mb-8 text-2xl">CONNECT WALLET TO PROVE OWNERSHIP</p>
             <button onclick="connectWallet()" id="connectBtn"
@@ -60,6 +61,7 @@
             <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
+        <!-- VAULT CONTENT -->
         <div id="vaultContent" class="hidden">
             <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex justify-between items-center">
                 <div>
@@ -84,7 +86,6 @@
 
     <script>
         const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
-
         let userAddress = null;
         let rainPlaying = true;
 
@@ -111,19 +112,15 @@
 
             try {
                 if (typeof window.ethereum === "undefined") {
-                    status.innerHTML = "❌ MetaMask not detected. Please install MetaMask.";
+                    status.innerHTML = "❌ MetaMask not found. Please install MetaMask.";
                     return;
                 }
 
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
-                
-                // Force popup
                 await provider.send("eth_requestAccounts", []);
-                
                 const signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
-                // Check ownership
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, [
                     "function balanceOf(address) view returns (uint256)"
                 ], provider);
@@ -141,9 +138,9 @@
             } catch (err) {
                 console.error(err);
                 if (err.code === 4001) {
-                    status.innerHTML = "❌ You rejected the connection request.";
+                    status.innerHTML = "❌ You rejected the connection.";
                 } else {
-                    status.innerHTML = "❌ Connection failed.<br>Make sure you're on Ethereum Mainnet.";
+                    status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
                 }
             }
         }
@@ -153,22 +150,50 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Message system (kept short for now)
+        // Full Message System
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
             const container = document.getElementById('messages');
-            container.innerHTML = messages.slice().reverse().map(m => `
-                <div class="message p-8 rounded-2xl">
+            container.innerHTML = '';
+            messages.slice().reverse().forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'message p-8 rounded-2xl';
+                div.innerHTML = `
                     <div class="text-red-400 text-sm">${m.username || 'Anonymous Bearer'} — ${new Date(m.time).toLocaleString()}</div>
                     <div class="mt-3 text-lg">${m.text}</div>
-                </div>
-            `).join('');
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function canPostVault() {
+            const lastPost = localStorage.getItem('lastVaultPost');
+            if (!lastPost) return true;
+            return (Date.now() - parseInt(lastPost)) > 3600000; // 1 hour
         }
 
         function postMessage() {
-            // ... (add your full postMessage function here)
-            alert("Message system active (add full function if needed)");
+            if (!canPostVault()) {
+                alert("You can only transmit once per hour in the Crimson Vault.");
+                return;
+            }
+
+            const input = document.getElementById('messageInput');
+            const nameInput = document.getElementById('username');
+            const text = input.value.trim();
+            if (!text) return;
+
+            messages.push({
+                username: nameInput.value.trim() || (userAddress ? userAddress.slice(0,8) : "Anonymous Holder"),
+                text: text,
+                time: Date.now()
+            });
+
+            localStorage.setItem('crimsonVault', JSON.stringify(messages));
+            localStorage.setItem('lastVaultPost', Date.now());
+            input.value = '';
+            loadMessages();
         }
 
         window.onload = () => {
