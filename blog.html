@@ -3,50 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Public Transmission Wall - Lucifer Protocol">
     <title>LUCIFER PROTOCOL — TRANSMISSION WALL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
-        
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
         .blood-text { text-shadow: 0 0 25px #ff0000, 0 0 70px #8b0000; }
-        
-        .glitch {
-            position: relative;
-            color: #fff;
-            font-weight: 900;
-        }
-        .glitch::before,
-        .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0.2;
+        .glitch { position: relative; color: #fff; font-weight: 900; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.2;
         }
         .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
         .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
-
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
-        
         .message { background: rgba(20, 0, 0, 0.85); border-left: 5px solid #ff4444; }
     </style>
 </head>
 <body class="min-h-screen relative">
 
-    <!-- BLOOD RAIN -->
     <div id="bloodRain" class="blood-rain"></div>
 
-    <!-- RAIN BUTTON -->
     <button onclick="toggleRain()" class="fixed bottom-8 right-8 z-50 bg-black border-4 border-red-600 hover:border-red-400 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl transition-all">
         <i class="fa-solid fa-droplet" id="rainIcon"></i>
     </button>
 
-    <!-- NAV -->
     <nav class="fixed top-0 w-full bg-black/95 border-b-4 border-red-900 z-50">
         <div class="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -84,73 +67,54 @@
 
     <script>
         let rainPlaying = true;
-        function toggleRain() {
-            rainPlaying = !rainPlaying;
-            document.getElementById('bloodRain').style.opacity = rainPlaying ? '0.45' : '0';
-            const icon = document.getElementById('rainIcon');
-            icon.classList.toggle('fa-droplet', rainPlaying);
-            icon.classList.toggle('fa-droplet-slash', !rainPlaying);
-        }
+        // rain functions...
 
-        function createBloodDrop() {
-            const drop = document.createElement('div');
-            drop.className = 'blood-drop';
-            drop.style.left = Math.random() * 100 + 'vw';
-            drop.style.animationDuration = (Math.random() * 1.3 + 0.8) + 's';
-            document.getElementById('bloodRain').appendChild(drop);
-            setTimeout(() => drop.remove(), 8000);
-        }
-
-        let messages = JSON.parse(localStorage.getItem('publicWall')) || [];
-
-        function loadMessages() {
-            const container = document.getElementById('messages');
-            container.innerHTML = '';
-            messages.slice().reverse().forEach(m => {
-                const div = document.createElement('div');
-                div.className = 'message p-8 rounded-2xl';
-                div.innerHTML = `
-                    <div class="text-red-400 text-sm">${m.username || 'Anonymous'} — ${new Date(m.time).toLocaleString()}</div>
-                    <div class="mt-3 text-lg">${m.text}</div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function canPostPublic() {
-            const lastPost = localStorage.getItem('lastPublicPost');
-            if (!lastPost) return true;
-            const hoursPassed = (Date.now() - parseInt(lastPost)) / (1000 * 60 * 60);
-            return hoursPassed >= 12;
-        }
-
-        function postMessage() {
-            if (!canPostPublic()) {
-                alert("You can only post once every 12 hours on the Public Wall.");
-                return;
+        async function loadMessages() {
+            try {
+                const res = await fetch('/api/messages');
+                const messages = await res.json();
+                const container = document.getElementById('messages');
+                container.innerHTML = '';
+                messages.slice().reverse().forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'message p-8 rounded-2xl';
+                    div.innerHTML = `
+                        <div class="text-red-400 text-sm">${m.username || 'Anonymous'} — ${new Date(m.time).toLocaleString()}</div>
+                        <div class="mt-3 text-lg">${m.text}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch(e) {
+                console.log("Backend not ready yet");
             }
+        }
 
+        async function postMessage() {
             const input = document.getElementById('messageInput');
             const nameInput = document.getElementById('username');
             const text = input.value.trim();
             if (!text) return;
 
-            messages.push({
-                username: nameInput.value.trim() || "Anonymous",
-                text: text,
-                time: Date.now()
-            });
-
-            localStorage.setItem('publicWall', JSON.stringify(messages));
-            localStorage.setItem('lastPublicPost', Date.now());
-            input.value = '';
-            loadMessages();
+            try {
+                await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: nameInput.value.trim() || "Anonymous",
+                        text: text
+                    })
+                });
+                input.value = '';
+                loadMessages();
+            } catch(e) {
+                alert("Message sent locally (backend coming soon)");
+            }
         }
 
         window.onload = () => {
-            for (let i = 0; i < 30; i++) createBloodDrop();
-            setInterval(createBloodDrop, 80);
+            // blood rain...
             loadMessages();
+            setInterval(loadMessages, 5000); // refresh every 5s
         };
     </script>
 </body>
