@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Public Transmission Wall - Lucifer Protocol">
     <title>LUCIFER PROTOCOL — TRANSMISSION WALL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
@@ -12,16 +13,21 @@
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
         .blood-text { text-shadow: 0 0 25px #ff0000, 0 0 70px #8b0000; }
         
-        .glitch { position: relative; color: #fff; font-weight: 900; animation: glitch-skew 4s infinite linear alternate-reverse; }
-        .glitch::before, .glitch::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        .glitch {
+            position: relative;
+            color: #fff;
+            font-weight: 900;
         }
-        .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; animation: glitch-anim 2s infinite linear alternate-reverse; clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%); }
-        .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; animation: glitch-anim2 1.8s infinite linear alternate-reverse; clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%); }
-
-        @keyframes glitch-skew { 0% { transform: skew(0deg); } 10% { transform: skew(4deg); } 20% { transform: skew(-4deg); } }
-        @keyframes glitch-anim { 0%,100% { clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%); } 50% { clip-path: polygon(0 15%, 100% 15%, 100% 45%, 0 45%); } }
-        @keyframes glitch-anim2 { 0%,100% { clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%); } 50% { clip-path: polygon(0 55%, 100% 55%, 100% 85%, 0 85%); } }
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.2;
+        }
+        .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
+        .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
 
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
@@ -47,9 +53,12 @@
                 <span class="text-5xl text-red-500">⛧</span>
                 <h1 class="text-4xl tracking-[8px] blood-text glitch" data-text="LUCIFER PROTOCOL">LUCIFER PROTOCOL</h1>
             </div>
-            <div class="flex gap-6 text-red-400">
+            <div class="flex gap-8 text-red-400">
                 <a href="index.html" class="hover:text-white">GENESIS SIGILS</a>
                 <a href="vault.html" class="hover:text-white">CRIMSON VAULT</a>
+                <a href="https://discord.gg/scDHZyruq" target="_blank" class="hover:text-white flex items-center gap-2">
+                    <i class="fa-brands fa-discord"></i> DISCORD
+                </a>
             </div>
         </div>
     </nav>
@@ -59,7 +68,7 @@
         <p class="text-center text-red-400 text-2xl mb-12">Public Channel — The World May Listen</p>
 
         <div class="bg-black/80 border border-red-900 p-8 rounded-3xl mb-10">
-            <div class="flex gap-4">
+            <div class="flex flex-col md:flex-row gap-4">
                 <input id="username" placeholder="Your Name / Sigil" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl text-lg">
                 <input id="messageInput" placeholder="Transmit your message to the world..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl text-lg">
                 <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
