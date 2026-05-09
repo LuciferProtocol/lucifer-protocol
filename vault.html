@@ -51,7 +51,6 @@
         <h1 class="text-7xl text-center blood-text glitch mb-3" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
         <p class="text-center text-red-400 text-xl mb-12">Private Archive — Genesis Sigil Holders Only</p>
 
-        <!-- GATE -->
         <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
             <p class="text-red-500 mb-8 text-2xl">CONNECT WALLET TO PROVE OWNERSHIP</p>
             <button onclick="connectWallet()" id="connectBtn"
@@ -61,7 +60,6 @@
             <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
-        <!-- VAULT CONTENT -->
         <div id="vaultContent" class="hidden">
             <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex justify-between items-center">
                 <div>
@@ -108,19 +106,23 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Connecting...";
+            status.textContent = "Opening MetaMask...";
 
             try {
                 if (typeof window.ethereum === "undefined") {
-                    status.innerHTML = "❌ MetaMask not found. Please install MetaMask.";
+                    status.innerHTML = "❌ MetaMask not detected.<br>Please install MetaMask.";
                     return;
                 }
 
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
+                
+                // This should force the popup
                 await provider.send("eth_requestAccounts", []);
+                
                 const signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
+                // Check ownership
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, [
                     "function balanceOf(address) view returns (uint256)"
                 ], provider);
@@ -137,11 +139,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                if (err.code === 4001) {
-                    status.innerHTML = "❌ You rejected the connection.";
-                } else {
-                    status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
-                }
+                status.innerHTML = "❌ MetaMask connection failed.<br>Make sure MetaMask is unlocked and try again.";
             }
         }
 
@@ -150,7 +148,7 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Full Message System
+        // Message System
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
@@ -170,7 +168,7 @@
         function canPostVault() {
             const lastPost = localStorage.getItem('lastVaultPost');
             if (!lastPost) return true;
-            return (Date.now() - parseInt(lastPost)) > 3600000; // 1 hour
+            return (Date.now() - parseInt(lastPost)) > 3600000;
         }
 
         function postMessage() {
@@ -178,7 +176,6 @@
                 alert("You can only transmit once per hour in the Crimson Vault.");
                 return;
             }
-
             const input = document.getElementById('messageInput');
             const nameInput = document.getElementById('username');
             const text = input.value.trim();
