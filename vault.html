@@ -6,7 +6,6 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -106,10 +105,10 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Opening wallet...";
+            status.textContent = "Opening MetaMask...";
 
             try {
-                // Most reliable method
+                // Direct request - should force popup
                 const accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
@@ -129,11 +128,11 @@
                     document.getElementById('vaultContent').classList.remove('hidden');
                     loadMessages();
                 } else {
-                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
+                    status.innerHTML = "❌ No Genesis Sigil found.";
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Connection failed or cancelled.<br>Please make sure MetaMask is unlocked.";
+                status.innerHTML = "❌ MetaMask did not open.<br>Make sure it is unlocked and try again.";
             }
         }
 
@@ -142,7 +141,6 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Message System
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
@@ -160,14 +158,13 @@
         }
 
         function postMessage() {
-            if (!userAddress) return;
             const input = document.getElementById('messageInput');
             const nameInput = document.getElementById('username');
             const text = input.value.trim();
             if (!text) return;
 
             messages.push({
-                username: nameInput.value.trim() || userAddress.slice(0,8),
+                username: nameInput.value.trim() || "Anonymous Holder",
                 text: text,
                 time: Date.now()
             });
