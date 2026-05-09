@@ -10,16 +10,64 @@
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
-        .blood-text { text-shadow: 0 0 20px #ff0000, 0 0 50px #8b0000; }
+        .blood-text { text-shadow: 0 0 25px #ff0000, 0 0 70px #8b0000; }
         
-        .sigil-card { transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1); }
-        .sigil-card:hover { transform: translateY(-25px) scale(1.05); box-shadow: 0 0 100px rgba(255, 0, 0, 0.85); }
+        .sigil-card { 
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1); 
+            position: relative;
+            overflow: hidden;
+        }
+        .sigil-card:hover { 
+            transform: translateY(-25px) scale(1.05); 
+            box-shadow: 0 0 130px rgba(255, 0, 0, 0.95); 
+        }
         .sigil-img { transition: all 0.8s ease; }
         .sigil-card:hover .sigil-img { transform: scale(1.12); filter: brightness(1.25) contrast(1.1); }
-        
-        .glitch { animation: glitch 1.4s infinite alternate; }
-        @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-4px, 4px); } 40% { transform: translate(4px, -4px); } }
-        
+
+        .sigil-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sigil-card:hover .sigil-overlay { opacity: 0.88; }
+
+        .custom-sigil {
+            width: 175px;
+            height: 175px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: drop-shadow(0 0 40px #ff0000);
+            animation: sigilRotate 20s linear infinite;
+        }
+        .sigil-card:hover .custom-sigil { animation-duration: 8s; }
+
+        @keyframes sigilRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .glitch {
+            position: relative;
+            color: #fff;
+            font-weight: 900;
+        }
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.2;
+        }
+        .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
+        .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
+
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
@@ -30,32 +78,55 @@
     <!-- BLOOD RAIN -->
     <div id="bloodRain" class="blood-rain"></div>
 
-    <!-- MUSIC -->
-    <button onclick="toggleMusic()" id="musicBtn" class="fixed bottom-8 right-8 z-50 bg-black border-4 border-red-600 hover:border-red-400 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl transition-all">
-        <i class="fa-solid fa-play" id="musicIcon"></i>
+    <button onclick="toggleRain()" class="fixed bottom-8 right-8 z-50 bg-black border-4 border-red-600 hover:border-red-400 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl transition-all">
+        <i class="fa-solid fa-droplet" id="rainIcon"></i>
     </button>
-    <audio id="ritualAudio" loop><source src="https://freesound.org/data/previews/612/612095_11861866-lq.mp3" type="audio/mpeg"></audio>
 
     <!-- NAV -->
     <nav class="fixed top-0 w-full bg-black/95 border-b-4 border-red-900 z-50">
         <div class="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <span class="text-5xl text-red-500">⛧</span>
-                <h1 class="text-4xl tracking-[8px] blood-text glitch">LUCIFER PROTOCOL</h1>
+                <h1 class="text-4xl tracking-[8px] blood-text glitch" data-text="LUCIFER PROTOCOL">LUCIFER PROTOCOL</h1>
             </div>
             <div class="flex gap-8 text-red-400">
-                <a href="blog.html" class="hover:text-red-500">TRANSMISSION WALL</a>
+                <a href="blog.html" class="hover:text-white">PUBLIC TRANSMISSION WALL</a>
+                <a href="vault.html" class="hover:text-white">CRIMSON VAULT</a>
+                <a href="https://discord.gg/scDHZyruq" target="_blank" class="hover:text-white flex items-center gap-2">
+                    <i class="fa-brands fa-discord"></i> DISCORD
+                </a>
                 <span class="text-red-500">GENESIS • ONLY 10 EXIST</span>
             </div>
         </div>
     </nav>
 
-    <!-- HERO -->
-    <section class="min-h-screen flex items-center justify-center relative border-b-8 border-red-900">
-        <div class="text-center z-10 px-6">
-            <h1 class="text-[8rem] md:text-[12rem] leading-none font-black blood-text glitch tracking-widest mb-6">WE ARE<br>NOT FLESH</h1>
-            <p class="text-5xl text-red-400 mb-12">GENESIS SIGILS AWAKENED</p>
-            <a href="#sigils" class="inline-block px-20 py-8 bg-red-900 hover:bg-red-700 text-3xl border-4 border-red-500 tracking-widest">ENTER THE PROTOCOL</a>
+    <!-- HERO - CLEAN -->
+    <section class="min-h-screen flex items-center justify-center relative border-b-8 border-red-900 overflow-hidden">
+        <div class="text-center z-10 px-6 max-w-5xl">
+            <h1 class="text-[6.5rem] md:text-[9.5rem] lg:text-[11.5rem] leading-[0.8] font-black blood-text" 
+                style="text-shadow: 0 0 40px #ff0000, 0 0 90px #8b0000;">
+                WE ARE<br>NOT FLESH
+            </h1>
+            
+            <p class="text-5xl md:text-6xl text-red-400 mt-8 mb-16 tracking-[8px] glitch" 
+               data-text="GENESIS SIGILS AWAKENED">
+               GENESIS SIGILS AWAKENED
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="#sigils" 
+                   class="group relative inline-block px-20 py-8 text-3xl font-bold tracking-widest border-4 border-red-600 
+                          bg-red-950 hover:bg-red-900 text-white transition-all duration-300 overflow-hidden min-w-[280px]">
+                    <span class="relative z-10">ENTER THE PROTOCOL</span>
+                </a>
+                
+                <a href="https://discord.gg/scDHZyruqYOUR_INVITE_CODE" target="_blank" 
+                   class="group relative inline-block px-20 py-8 text-3xl font-bold tracking-widest border-4 border-indigo-500 
+                          bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all duration-300 flex items-center justify-center gap-4 min-w-[280px]">
+                    <i class="fa-brands fa-discord text-4xl"></i>
+                    <span class="relative z-10">JOIN THE CRIMSON VAULT</span>
+                </a>
+            </div>
         </div>
     </section>
 
@@ -68,130 +139,131 @@
 
                 <!-- #001 -->
                 <div class="sigil-card bg-zinc-950 border-2 border-red-900 rounded-3xl overflow-hidden">
-                    <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/cdcb453ab1fde13a78da253d73d053/8bcdcb453ab1fde13a78da253d73d053.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#001">
+                    <div class="relative">
+                        <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/cdcb453ab1fde13a78da253d73d053/8bcdcb453ab1fde13a78da253d73d053.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#001">
+                        <div class="sigil-overlay">
+                            <div class="custom-sigil" style="background-image: url('https://raw.githubusercontent.com/LuciferProtocol/lucifer-protocol/main/TransparentSigil.png');"></div>
+                        </div>
+                    </div>
                     <div class="p-8">
                         <h3 class="text-3xl font-bold text-red-400">#001 LILITH VOID</h3>
-                        <p class="text-gray-400">3 Available • 0.35 ETH</p>
-                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/1" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">BUY ON OPENSEA</a>
+                        <p class="text-gray-400">3 Editions • 0.35 ETH</p>
+                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/1" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">CLAIM ON OPENSEA</a>
                     </div>
                 </div>
 
                 <!-- #002 -->
                 <div class="sigil-card bg-zinc-950 border-2 border-red-900 rounded-3xl overflow-hidden">
-                    <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/11d5d0ab8b5cd589e882cabe11eb5b/8f11d5d0ab8b5cd589e882cabe11eb5b.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#002">
+                    <div class="relative">
+                        <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/11d5d0ab8b5cd589e882cabe11eb5b/8f11d5d0ab8b5cd589e882cabe11eb5b.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#002">
+                        <div class="sigil-overlay">
+                            <div class="custom-sigil" style="background-image: url('https://raw.githubusercontent.com/LuciferProtocol/lucifer-protocol/main/TransparentSigil.png');"></div>
+                        </div>
+                    </div>
                     <div class="p-8">
                         <h3 class="text-3xl font-bold text-red-400">#002 THE WAILING CROWN</h3>
-                        <p class="text-gray-400">3 Available • 0.42 ETH</p>
-                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/2" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">BUY ON OPENSEA</a>
+                        <p class="text-gray-400">3 Editions • 0.42 ETH</p>
+                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/2" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">CLAIM ON OPENSEA</a>
                     </div>
                 </div>
 
                 <!-- #003 -->
                 <div class="sigil-card bg-zinc-950 border-2 border-red-900 rounded-3xl overflow-hidden">
-                    <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/cb8be4d97b500e00ffd7b5fded4a07/78cb8be4d97b500e00ffd7b5fded4a07.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#003">
+                    <div class="relative">
+                        <img src="https://i2.seadn.io/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/cb8be4d97b500e00ffd7b5fded4a07/78cb8be4d97b500e00ffd7b5fded4a07.mp4?frame-time=1&w=1200" class="sigil-img w-full h-96 object-cover" alt="#003">
+                        <div class="sigil-overlay">
+                            <div class="custom-sigil" style="background-image: url('https://raw.githubusercontent.com/LuciferProtocol/lucifer-protocol/main/TransparentSigil.png');"></div>
+                        </div>
+                    </div>
                     <div class="p-8">
                         <h3 class="text-3xl font-bold text-red-400">#003 THE VERDANT HARLOT</h3>
-                        <p class="text-gray-400">4 Available • 0.48 ETH</p>
-                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/3" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">BUY ON OPENSEA</a>
+                        <p class="text-gray-400">4 Editions • 0.48 ETH</p>
+                        <a href="https://opensea.io/item/ethereum/0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16/3" target="_blank" class="mt-8 block w-full py-6 bg-red-900 hover:bg-red-700 text-center font-bold text-xl border border-red-500">CLAIM ON OPENSEA</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section class="py-28 px-6 bg-black border-t-4 border-red-900">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-6xl text-center blood-text mb-20">THE PROTOCOL UNFOLDS</h2>
+            
+            <div class="space-y-16 max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div class="md:w-48 flex-shrink-0">
+                        <div class="text-red-500 text-2xl font-bold">PHASE 01</div>
+                        <div class="text-red-400">GENESIS AWAKENING</div>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl blood-text">The Three Sires Rise</h3>
+                        <p class="mt-4 text-gray-300">The 10 Prime Sigils have been released. The First Lie has been spoken. The machine screams. The Harlot claims her throne.</p>
+                        <p class="text-sm text-red-500 mt-6">✓ Completed</p>
                     </div>
                 </div>
 
+                <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div class="md:w-48 flex-shrink-0">
+                        <div class="text-red-500 text-2xl font-bold">PHASE 02</div>
+                        <div class="text-red-400">BLOODLINE AWAKENING</div>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl blood-text">The Lines Spread</h3>
+                        <p class="mt-4 text-gray-300">Release of Bloodline Editions. Launch of the Public Transmission Wall and the private Crimson Vault. The Archives are now open.</p>
+                        <ul class="mt-6 space-y-2 text-gray-400">
+                            <li>• Public Transmission Wall live</li>
+                            <li>• Private Crimson Vault for Sigil holders</li>
+                            <li>• First major airdrop for Prime Sires</li>
+                        </ul>
+                        <p class="text-sm text-red-500 mt-6">In Progress</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div class="md:w-48 flex-shrink-0">
+                        <div class="text-red-500 text-2xl font-bold">PHASE 03</div>
+                        <div class="text-red-400">CRIMSON VAULT</div>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl blood-text">The Deepest Chamber Opens</h3>
+                        <p class="mt-4 text-gray-300">Expanded private rituals inside the Crimson Vault. Exclusive content, voice transmissions, and physical relics for Harlot Line and Prime Sires.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div class="md:w-48 flex-shrink-0">
+                        <div class="text-red-500 text-2xl font-bold">PHASE 04</div>
+                        <div class="text-red-400">ETERNAL PROTOCOL</div>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl blood-text">Beyond the Veil</h3>
+                        <p class="mt-4 text-gray-300">New Bloodlines. Collaborative rituals. Audio transmissions. A living, breathing dark community across both walls.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-20 text-red-400 text-xl">
+                The Protocol is alive.<br>
+                It grows with every Sigil claimed.
             </div>
         </div>
     </section>
 
     <footer class="bg-black py-16 border-t-4 border-red-900 text-center">
         <p class="text-4xl blood-text mb-6">WE ARE NOT FLESH</p>
-        <p class="text-gray-500">10% Creator Royalty • Blog Launching Soon • Only 10 Genesis Sigils Exist</p>
+        <p class="text-gray-500">10% Creator Royalty • Public Transmission Wall + Private Crimson Vault • Only 10 Genesis Sigils Exist</p>
     </footer>
 
-
-
-  <!-- ROADMAP SECTION -->
-<section class="py-28 px-6 bg-black border-t-4 border-red-900">
-    <div class="max-w-6xl mx-auto">
-        <h2 class="text-6xl text-center blood-text mb-20">THE PROTOCOL UNFOLDS</h2>
-        
-        <div class="space-y-16 max-w-4xl mx-auto">
-            
-            <!-- Phase 1 -->
-            <div class="flex flex-col md:flex-row gap-8 items-start">
-                <div class="md:w-48 flex-shrink-0">
-                    <div class="text-red-500 text-2xl font-bold">PHASE 01</div>
-                    <div class="text-red-400">GENESIS AWAKENING</div>
-                </div>
-                <div>
-                    <h3 class="text-3xl blood-text">The Three Sires Rise</h3>
-                    <p class="mt-4 text-gray-300">The 10 Prime Sigils have been released. The First Lie has been spoken. The machine screams. The Harlot claims her throne.</p>
-                    <p class="text-sm text-red-500 mt-6">✓ Completed</p>
-                </div>
-            </div>
-
-            <!-- Phase 2 -->
-            <div class="flex flex-col md:flex-row gap-8 items-start">
-                <div class="md:w-48 flex-shrink-0">
-                    <div class="text-red-500 text-2xl font-bold">PHASE 02</div>
-                    <div class="text-red-400">BLOODLINE AWAKENING</div>
-                </div>
-                <div>
-                    <h3 class="text-3xl blood-text">The Lines Spread</h3>
-                    <p class="mt-4 text-gray-300">Release of Lilith, Wailing Crown, and Verdant Harlot Bloodline Editions. The Transmission Wall grows louder. The Archives begin to open.</p>
-                    <ul class="mt-6 space-y-2 text-gray-400">
-                        <li>• Full Wailing Archive launch</li>
-                        <li>• Expanded community features</li>
-                        <li>• First major airdrop for Prime Sires</li>
-                    </ul>
-                    <p class="text-sm text-red-500 mt-6">In Progress</p>
-                </div>
-            </div>
-
-            <!-- Phase 3 -->
-            <div class="flex flex-col md:flex-row gap-8 items-start">
-                <div class="md:w-48 flex-shrink-0">
-                    <div class="text-red-500 text-2xl font-bold">PHASE 03</div>
-                    <div class="text-red-400">CRIMSON VAULT</div>
-                </div>
-                <div>
-                    <h3 class="text-3xl blood-text">The Deepest Chamber Opens</h3>
-                    <p class="mt-4 text-gray-300">The Emerald Codex expands. Private rituals. Exclusive content for Harlot Line and Prime Sires. Physical relics and limited art drops.</p>
-                </div>
-            </div>
-
-            <!-- Phase 4 -->
-            <div class="flex flex-col md:flex-row gap-8 items-start">
-                <div class="md:w-48 flex-shrink-0">
-                    <div class="text-red-500 text-2xl font-bold">PHASE 04</div>
-                    <div class="text-red-400">ETERNAL PROTOCOL</div>
-                </div>
-                <div>
-                    <h3 class="text-3xl blood-text">Beyond the Veil</h3>
-                    <p class="mt-4 text-gray-300">New Bloodlines. Collaborative rituals. Audio transmissions. Possible metaverse presence. A living, breathing dark community.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center mt-20 text-red-400 text-xl">
-            The Protocol is alive.<br>
-            It grows with every Sigil claimed.
-        </div>
-    </div>
-</section>
-
     <script>
-        const audio = document.getElementById('ritualAudio');
-        const musicIcon = document.getElementById('musicIcon');
-        let isPlaying = false;
-        function toggleMusic() {
-            if (isPlaying) {
-                audio.pause();
-                musicIcon.classList.replace('fa-pause', 'fa-play');
-            } else {
-                audio.play();
-                musicIcon.classList.replace('fa-play', 'fa-pause');
-            }
-            isPlaying = !isPlaying;
+        let rainPlaying = true;
+        function toggleRain() {
+            rainPlaying = !rainPlaying;
+            document.getElementById('bloodRain').style.opacity = rainPlaying ? '0.45' : '0';
+            const icon = document.getElementById('rainIcon');
+            icon.classList.toggle('fa-droplet', rainPlaying);
+            icon.classList.toggle('fa-droplet-slash', !rainPlaying);
         }
-
         function createBloodDrop() {
             const drop = document.createElement('div');
             drop.className = 'blood-drop';
@@ -200,7 +272,6 @@
             document.getElementById('bloodRain').appendChild(drop);
             setTimeout(() => drop.remove(), 8000);
         }
-
         window.onload = () => {
             for (let i = 0; i < 30; i++) createBloodDrop();
             setInterval(createBloodDrop, 80);
