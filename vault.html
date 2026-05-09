@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Crimson Vault - Genesis Sigil Holders Only">
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
@@ -18,9 +19,11 @@
             color: #fff;
             font-weight: 900;
         }
-        .glitch::before, .glitch::after {
+        .glitch::before,
+        .glitch::after {
             content: attr(data-text);
-            position: absolute; top: 0; left: 0;
+            position: absolute;
+            top: 0; left: 0;
             width: 100%; height: 100%;
             opacity: 0.2;
         }
@@ -32,11 +35,11 @@
         @keyframes fall { to { transform: translateY(100vh); } }
         
         .message { background: rgba(20, 0, 0, 0.9); border-left: 5px solid #ff0000; }
-        .connected { color: #22ff88; }
     </style>
 </head>
 <body class="min-h-screen relative">
 
+    <!-- BLOOD RAIN -->
     <div id="bloodRain" class="blood-rain"></div>
 
     <button onclick="toggleRain()" class="fixed bottom-8 right-8 z-50 bg-black border-4 border-red-600 hover:border-red-400 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl transition-all">
@@ -64,24 +67,24 @@
         <h1 class="text-7xl text-center blood-text glitch mb-3" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
         <p class="text-center text-red-400 text-xl mb-12">Private Archive — Genesis Sigil Holders Only</p>
 
-        <!-- WALLET GATE -->
+        <!-- GATE -->
         <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
-            <p class="text-red-500 mb-8 text-2xl">CONNECT YOUR WALLET TO ENTER</p>
+            <p class="text-red-500 mb-8 text-2xl">CONNECT WALLET TO PROVE OWNERSHIP</p>
             <button onclick="connectWallet()" id="connectBtn"
-                    class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest transition-all">
+                    class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
                 CONNECT WALLET
             </button>
-            <p id="status" class="mt-6 text-red-400 text-sm"></p>
+            <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
         <!-- VAULT CONTENT -->
         <div id="vaultContent" class="hidden">
-            <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex items-center justify-between">
+            <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex justify-between items-center">
                 <div>
-                    <span class="text-green-400">CONNECTED:</span> 
+                    <span class="text-green-400">✓ VERIFIED HOLDER</span><br>
                     <span id="walletAddress" class="font-mono text-sm"></span>
                 </div>
-                <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500 text-sm">DISCONNECT</button>
+                <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500">DISCONNECT</button>
             </div>
 
             <div class="flex gap-4 mb-8">
@@ -89,6 +92,7 @@
                 <input id="messageInput" placeholder="Transmit uncensored thoughts..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl">
                 <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
             </div>
+            
             <div id="messages" class="space-y-6"></div>
         </div>
     </div>
@@ -98,10 +102,11 @@
     </footer>
 
     <script>
-        let provider, signer, userAddress;
+        const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
+        let provider, userAddress;
         let rainPlaying = true;
 
-        function toggleRain() { /* same as before */ 
+        function toggleRain() {
             rainPlaying = !rainPlaying;
             document.getElementById('bloodRain').style.opacity = rainPlaying ? '0.45' : '0';
             const icon = document.getElementById('rainIcon');
@@ -109,7 +114,7 @@
             icon.classList.toggle('fa-droplet-slash', !rainPlaying);
         }
 
-        function createBloodDrop() { /* same */ 
+        function createBloodDrop() {
             const drop = document.createElement('div');
             drop.className = 'blood-drop';
             drop.style.left = Math.random() * 100 + 'vw';
@@ -119,9 +124,7 @@
         }
 
         async function connectWallet() {
-            const btn = document.getElementById('connectBtn');
             const status = document.getElementById('status');
-
             try {
                 if (!window.ethereum) {
                     alert("Please install MetaMask or another wallet");
@@ -130,17 +133,28 @@
 
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
+                const signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
-                document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-                document.getElementById('gate').classList.add('hidden');
-                document.getElementById('vaultContent').classList.remove('hidden');
-                
-                loadMessages();
-                status.textContent = "Connected ✓";
+                // Check NFT balance
+                const balance = await provider.getBalance(userAddress); // Placeholder - real check below
+                const nftContract = new ethers.Contract(
+                    CONTRACT_ADDRESS,
+                    ["function balanceOf(address owner) view returns (uint256)"],
+                    provider
+                );
+                const nftBalance = await nftContract.balanceOf(userAddress);
+
+                if (nftBalance > 0) {
+                    document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+                    document.getElementById('gate').classList.add('hidden');
+                    document.getElementById('vaultContent').classList.remove('hidden');
+                    loadMessages();
+                } else {
+                    status.innerHTML = "No Genesis Sigil found in this wallet.";
+                }
             } catch (err) {
-                status.textContent = "Connection failed.";
+                status.innerHTML = "Connection failed.";
                 console.error(err);
             }
         }
@@ -150,7 +164,7 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Message system (same as before)
+        // Message System
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
@@ -170,7 +184,7 @@
         function canPostVault() {
             const lastPost = localStorage.getItem('lastVaultPost');
             if (!lastPost) return true;
-            return (Date.now() - parseInt(lastPost)) > 3600000; // 1 hour
+            return (Date.now() - parseInt(lastPost)) > 3600000;
         }
 
         function postMessage() {
@@ -178,14 +192,13 @@
                 alert("You can only transmit once per hour in the Crimson Vault.");
                 return;
             }
-
             const input = document.getElementById('messageInput');
             const nameInput = document.getElementById('username');
             const text = input.value.trim();
             if (!text) return;
 
             messages.push({
-                username: nameInput.value.trim() || userAddress?.slice(0,8) || "Anonymous Holder",
+                username: nameInput.value.trim() || (userAddress ? userAddress.slice(0,8) : "Anonymous Holder"),
                 text: text,
                 time: Date.now()
             });
