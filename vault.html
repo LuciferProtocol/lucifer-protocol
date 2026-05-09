@@ -3,50 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Crimson Vault - Genesis Sigil Holders Only">
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
-        
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
         .blood-text { text-shadow: 0 0 25px #ff0000, 0 0 70px #8b0000; }
-        
-        .glitch {
-            position: relative;
-            color: #fff;
-            font-weight: 900;
-        }
-        .glitch::before,
-        .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0.2;
+        .glitch { position: relative; color: #fff; font-weight: 900; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.2;
         }
         .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
         .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
-
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
-        
         .message { background: rgba(20, 0, 0, 0.9); border-left: 5px solid #ff0000; }
     </style>
 </head>
 <body class="min-h-screen relative">
 
-    <!-- BLOOD RAIN -->
     <div id="bloodRain" class="blood-rain"></div>
 
     <button onclick="toggleRain()" class="fixed bottom-8 right-8 z-50 bg-black border-4 border-red-600 hover:border-red-400 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl transition-all">
         <i class="fa-solid fa-droplet" id="rainIcon"></i>
     </button>
 
-    <!-- NAV -->
     <nav class="fixed top-0 w-full bg-black/95 border-b-4 border-red-900 z-50">
         <div class="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -77,11 +61,11 @@
             <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
-        <!-- VAULT CONTENT -->
+        <!-- VAULT -->
         <div id="vaultContent" class="hidden">
             <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex justify-between items-center">
                 <div>
-                    <span class="text-green-400">✓ VERIFIED HOLDER</span><br>
+                    <span class="text-green-400">✓ VERIFIED GENESIS HOLDER</span><br>
                     <span id="walletAddress" class="font-mono text-sm"></span>
                 </div>
                 <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500">DISCONNECT</button>
@@ -92,7 +76,6 @@
                 <input id="messageInput" placeholder="Transmit uncensored thoughts..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl">
                 <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
             </div>
-            
             <div id="messages" class="space-y-6"></div>
         </div>
     </div>
@@ -103,6 +86,7 @@
 
     <script>
         const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
+
         let provider, userAddress;
         let rainPlaying = true;
 
@@ -125,36 +109,30 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            try {
-                if (!window.ethereum) {
-                    alert("Please install MetaMask or another wallet");
-                    return;
-                }
+            status.textContent = "Connecting...";
 
+            try {
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
                 const signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
-                // Check NFT balance
-                const balance = await provider.getBalance(userAddress); // Placeholder - real check below
-                const nftContract = new ethers.Contract(
-                    CONTRACT_ADDRESS,
-                    ["function balanceOf(address owner) view returns (uint256)"],
-                    provider
-                );
-                const nftBalance = await nftContract.balanceOf(userAddress);
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, [
+                    "function balanceOf(address owner) view returns (uint256)"
+                ], provider);
 
-                if (nftBalance > 0) {
+                const balance = await contract.balanceOf(userAddress);
+
+                if (balance.toNumber() > 0) {
                     document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                     document.getElementById('gate').classList.add('hidden');
                     document.getElementById('vaultContent').classList.remove('hidden');
                     loadMessages();
                 } else {
-                    status.innerHTML = "No Genesis Sigil found in this wallet.";
+                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
                 }
             } catch (err) {
-                status.innerHTML = "Connection failed.";
+                status.innerHTML = "❌ Connection failed.";
                 console.error(err);
             }
         }
@@ -164,7 +142,7 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Message System
+        // Message System (same as before)
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
