@@ -101,13 +101,14 @@
             status.textContent = "Connecting...";
 
             try {
-                // Direct and simple
+                // Get accounts (works whether already connected or not)
                 const accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
 
                 const userAddress = accounts[0];
 
+                // Grant access
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
@@ -115,7 +116,7 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Failed.<br>Make sure MetaMask is unlocked.";
+                status.innerHTML = "❌ Failed to connect.<br>Make sure MetaMask is unlocked.";
             }
         }
 
