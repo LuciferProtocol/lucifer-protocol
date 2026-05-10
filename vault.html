@@ -6,6 +6,7 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -52,11 +53,9 @@
 
         <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
             <p class="text-red-500 mb-8 text-2xl">THE VEIL IS SEALED</p>
-            <button onclick="connectWallet()" class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest mb-4">
+            <button onclick="connectWallet()" id="connectBtn"
+                    class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
                 CONNECT WALLET TO ENTER
-            </button>
-            <button onclick="enterAnyway()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 border border-red-500 text-red-400 text-lg">
-                ENTER ANYWAY (TEST MODE)
             </button>
             <p id="status" class="mt-6 text-red-400"></p>
         </div>
@@ -99,25 +98,29 @@
     <script>
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Connecting...";
+            status.textContent = "Checking wallet...";
 
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                // 1. Check if already connected (this is the key fix)
+                let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+
+                if (accounts.length === 0) {
+                    status.textContent = "Opening wallet...";
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                }
+
                 const userAddress = accounts[0];
 
+                // 2. Grant access (NFT check can be added later)
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
                 loadMessages();
-            } catch (err) {
-                status.innerHTML = "❌ Failed.<br>Try the 'ENTER ANYWAY' button below.";
-            }
-        }
 
-        function enterAnyway() {
-            document.getElementById('gate').classList.add('hidden');
-            document.getElementById('vaultContent').classList.remove('hidden');
-            loadMessages();
+            } catch (err) {
+                console.error(err);
+                status.innerHTML = "❌ Failed to connect.<br>Please unlock MetaMask and try again.";
+            }
         }
 
         function disconnectWallet() {
