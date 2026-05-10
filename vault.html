@@ -15,6 +15,8 @@
         .glitch::before, .glitch::after {
             content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.2;
         }
+        .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
+        .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
@@ -55,7 +57,7 @@
                     class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
                 CONNECT WALLET
             </button>
-            <p id="status" class="mt-6 text-red-400 min-h-[60px]"></p>
+            <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
         <div id="vaultContent" class="hidden">
@@ -85,22 +87,32 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Opening wallet...";
+            status.innerHTML = "Opening wallet...";
 
             try {
                 if (!window.ethereum) {
-                    status.innerHTML = "❌ No wallet detected.<br>Install MetaMask or Coinbase Wallet.";
+                    status.innerHTML = "❌ No wallet found.<br>Install MetaMask.";
                     return;
                 }
 
-                // Force popup
+                // Request accounts
                 const accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
 
                 const userAddress = accounts[0];
 
-                // Check NFT balance
+                // Switch to Mainnet if needed
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x1' }]
+                    });
+                } catch (switchErr) {
+                    console.log("Network switch failed or not needed");
+                }
+
+                // Check balance
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, [
                     "function balanceOf(address) view returns (uint256)"
@@ -112,13 +124,18 @@
                     document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                     document.getElementById('gate').classList.add('hidden');
                     document.getElementById('vaultContent').classList.remove('hidden');
-                    // loadMessages() if you want
                 } else {
                     status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
+                if (err.code === 4001) {
+                    status.innerHTML = "❌ You rejected the connection.";
+                } else if (err.code === -32603) {
+                    status.innerHTML = "❌ Network error.<br>Make sure you're on Ethereum Mainnet.";
+                } else {
+                    status.innerHTML = "❌ Connection failed.<br>Unlock MetaMask and try again.";
+                }
             }
         }
 
@@ -127,11 +144,14 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Keep your existing rain + message system code here...
-        // (copy from previous versions)
+        // Rain + Message system (copy from your previous version)
+        let rainPlaying = true;
+        function toggleRain() { /* ... your existing code */ }
+        function createBloodDrop() { /* ... your existing code */ }
 
         window.onload = () => {
-            // blood rain code
+            for (let i = 0; i < 30; i++) createBloodDrop();
+            setInterval(createBloodDrop, 80);
         };
     </script>
 </body>
