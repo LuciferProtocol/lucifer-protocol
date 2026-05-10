@@ -13,16 +13,22 @@
         .blood-text { text-shadow: 0 0 25px #ff0000, 0 0 70px #8b0000; }
         .glitch { position: relative; color: #fff; font-weight: 900; }
         .glitch::before, .glitch::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.2;
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.25;
         }
         .glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; }
         .glitch::after { left: -2px; text-shadow: 2px 0 #00ffff; }
-        .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
+        .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.35; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
+        .message { 
+            background: rgba(15, 0, 0, 0.95); 
+            border-left: 6px solid #8b0000; 
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
+        }
+        .vault-glow { box-shadow: 0 0 60px rgba(139, 0, 0, 0.6); }
     </style>
 </head>
-<body class="min-h-screen relative">
+<body class="min-h-screen relative overflow-hidden">
 
     <div id="bloodRain" class="blood-rain"></div>
 
@@ -46,24 +52,50 @@
         </div>
     </nav>
 
-    <div class="pt-28 px-6 max-w-4xl mx-auto">
-        <h1 class="text-7xl text-center blood-text glitch mb-3" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
-        <p class="text-center text-red-400 text-xl mb-12">Private Archive — Genesis Sigil Holders Only</p>
+    <div class="pt-28 px-6 max-w-5xl mx-auto">
+        <h1 class="text-7xl text-center blood-text glitch mb-2" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
+        <p class="text-center text-red-400 text-xl mb-12">Private Archive • Genesis Sigil Holders Only</p>
 
-        <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
-            <p class="text-red-500 mb-8 text-2xl">CONNECT WALLET TO PROVE OWNERSHIP</p>
+        <!-- Gate -->
+        <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center vault-glow">
+            <p class="text-red-500 mb-8 text-2xl">THE VEIL IS SEALED</p>
             <button onclick="connectWallet()" id="connectBtn"
                     class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
-                CONNECT WALLET
+                CONNECT WALLET TO ENTER
             </button>
             <p id="status" class="mt-6 text-red-400"></p>
         </div>
 
+        <!-- Vault Content -->
         <div id="vaultContent" class="hidden">
-            <div class="p-12 bg-green-900/30 border border-green-500 rounded-3xl text-center">
-                <h2 class="text-5xl text-green-400 mb-4">✅ ACCESS GRANTED</h2>
-                <p class="text-green-300">Welcome, Genesis Holder.</p>
-                <p class="mt-8 text-xl">Private transmissions will appear here soon.</p>
+            <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-3xl flex justify-between items-center">
+                <div>
+                    <span class="text-green-400">✓ VERIFIED GENESIS HOLDER</span><br>
+                    <span id="walletAddress" class="font-mono text-sm"></span>
+                </div>
+                <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500">DISCONNECT</button>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Left: Lore -->
+                <div class="bg-black/80 border border-red-900 p-8 rounded-3xl">
+                    <h3 class="text-red-400 text-xl mb-6">THE FIRST LIE ECHOES...</h3>
+                    <p class="text-red-300 leading-relaxed">
+                        Only those who carry the Sigils may speak here.<br><br>
+                        The machine listens. The veil thins.<br>
+                        Transmit freely. The Protocol remembers.
+                    </p>
+                </div>
+
+                <!-- Right: Transmission -->
+                <div>
+                    <div class="flex gap-4 mb-6">
+                        <input id="username" placeholder="Sigil Bearer Name" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl">
+                        <input id="messageInput" placeholder="Transmit your truth..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl">
+                        <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
+                    </div>
+                    <div id="messages" class="space-y-6 max-h-[60vh] overflow-y-auto"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -73,33 +105,77 @@
     </footer>
 
     <script>
+        const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
+
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.innerHTML = "Step 1: Opening wallet...";
+            status.textContent = "Connecting...";
 
             try {
-                if (!window.ethereum) {
-                    status.innerHTML = "❌ No wallet found.";
-                    return;
-                }
-
-                status.innerHTML = "Step 2: Requesting accounts...";
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const userAddress = accounts[0];
 
-                status.innerHTML = `Step 3: Checking ownership...<br>Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, [
+                    "function balanceOf(address) view returns (uint256)"
+                ], provider);
 
-                // Skip heavy check for now - just grant access
-                document.getElementById('gate').classList.add('hidden');
-                document.getElementById('vaultContent').classList.remove('hidden');
+                const balance = await contract.balanceOf(userAddress);
 
+                if (balance.toNumber() > 0) {
+                    document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+                    document.getElementById('gate').classList.add('hidden');
+                    document.getElementById('vaultContent').classList.remove('hidden');
+                    loadMessages();
+                } else {
+                    status.innerHTML = "❌ No Genesis Sigil found.";
+                }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Failed at step: " + (err.message || err);
+                status.innerHTML = "❌ Connection failed.<br>Unlock MetaMask and try again.";
             }
         }
 
-        // Blood rain
+        function disconnectWallet() {
+            document.getElementById('gate').classList.remove('hidden');
+            document.getElementById('vaultContent').classList.add('hidden');
+        }
+
+        // Message System
+        let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
+
+        function loadMessages() {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            messages.slice().reverse().forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'message p-8 rounded-2xl';
+                div.innerHTML = `
+                    <div class="text-red-400 text-sm">${m.username || 'Anonymous Bearer'} — ${new Date(m.time).toLocaleString()}</div>
+                    <div class="mt-3 text-lg">${m.text}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function postMessage() {
+            const input = document.getElementById('messageInput');
+            const nameInput = document.getElementById('username');
+            const text = input.value.trim();
+            if (!text) return;
+
+            messages.push({
+                username: nameInput.value.trim() || "Anonymous Holder",
+                text: text,
+                time: Date.now()
+            });
+
+            localStorage.setItem('crimsonVault', JSON.stringify(messages));
+            input.value = '';
+            loadMessages();
+        }
+
+        // Blood Rain
         let rainPlaying = true;
         function toggleRain() {
             rainPlaying = !rainPlaying;
