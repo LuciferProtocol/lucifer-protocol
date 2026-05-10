@@ -6,7 +6,6 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -101,14 +100,12 @@
             status.textContent = "Connecting...";
 
             try {
-                // Get accounts (works whether already connected or not)
                 const accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
 
                 const userAddress = accounts[0];
 
-                // Grant access
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
@@ -116,7 +113,7 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Failed to connect.<br>Make sure MetaMask is unlocked.";
+                status.innerHTML = "❌ Failed.<br>Make sure MetaMask is unlocked and try again.";
             }
         }
 
