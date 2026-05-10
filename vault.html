@@ -6,6 +6,7 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -105,25 +106,25 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Connecting...";
+            status.textContent = "Opening wallet...";
 
             try {
-                // Most compatible way
-                if (!window.ethereum) {
-                    status.innerHTML = "❌ No wallet found.<br>Please install MetaMask or Coinbase Wallet.";
+                if (typeof window.ethereum === "undefined") {
+                    status.innerHTML = "❌ No crypto wallet detected.<br>Please install MetaMask.";
                     return;
                 }
 
+                // Request accounts (this should trigger the popup)
                 const accounts = await window.ethereum.request({
                     method: 'eth_requestAccounts'
                 });
 
                 userAddress = accounts[0];
 
-                // Check ownership
+                // Check NFT ownership
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, [
-                    "function balanceOf(address) view returns (uint256)"
+                    "function balanceOf(address owner) view returns (uint256)"
                 ], provider);
 
                 const balance = await contract.balanceOf(userAddress);
@@ -138,7 +139,11 @@
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Wallet connection failed.<br>Please make sure your wallet is unlocked.";
+                if (err.code === 4001) {
+                    status.innerHTML = "❌ You rejected the connection request.";
+                } else {
+                    status.innerHTML = "❌ Wallet connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
+                }
             }
         }
 
