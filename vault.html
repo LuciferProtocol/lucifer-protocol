@@ -6,6 +6,7 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -19,6 +20,7 @@
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.45; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
+        .message { background: rgba(20, 0, 0, 0.9); border-left: 5px solid #ff0000; }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -59,11 +61,20 @@
         </div>
 
         <div id="vaultContent" class="hidden">
-            <div class="p-8 bg-green-900/30 border border-green-500 rounded-3xl text-center">
-                <h2 class="text-4xl text-green-400">✅ ACCESS GRANTED</h2>
-                <p class="text-green-300 mt-4">Welcome to the Crimson Vault, Genesis Holder.</p>
-                <p class="mt-8 text-red-400">Private transmissions coming soon...</p>
+            <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-2xl flex justify-between items-center">
+                <div>
+                    <span class="text-green-400">✓ VERIFIED GENESIS HOLDER</span><br>
+                    <span id="walletAddress" class="font-mono text-sm"></span>
+                </div>
+                <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500">DISCONNECT</button>
             </div>
+
+            <div class="flex gap-4 mb-8">
+                <input id="username" placeholder="Your Sigil Name" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl">
+                <input id="messageInput" placeholder="Transmit uncensored thoughts..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl">
+                <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
+            </div>
+            <div id="messages" class="space-y-6"></div>
         </div>
     </div>
 
@@ -72,31 +83,74 @@
     </footer>
 
     <script>
+        const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
+
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Opening wallet...";
+            status.textContent = "Connecting...";
 
             try {
-                if (!window.ethereum) {
-                    status.innerHTML = "❌ No wallet detected.<br>Install MetaMask.";
-                    return;
-                }
-
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                });
-
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const userAddress = accounts[0];
-                document.getElementById('status').innerHTML = `✅ Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
 
-                // Success - show vault
-                document.getElementById('gate').classList.add('hidden');
-                document.getElementById('vaultContent').classList.remove('hidden');
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, [
+                    "function balanceOf(address) view returns (uint256)"
+                ], provider);
 
+                const balance = await contract.balanceOf(userAddress);
+
+                if (balance.toNumber() > 0) {
+                    document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+                    document.getElementById('gate').classList.add('hidden');
+                    document.getElementById('vaultContent').classList.remove('hidden');
+                    loadMessages();
+                } else {
+                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
+                }
             } catch (err) {
                 console.error(err);
                 status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
             }
+        }
+
+        function disconnectWallet() {
+            document.getElementById('gate').classList.remove('hidden');
+            document.getElementById('vaultContent').classList.add('hidden');
+        }
+
+        // Message system
+        let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
+
+        function loadMessages() {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            messages.slice().reverse().forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'message p-8 rounded-2xl';
+                div.innerHTML = `
+                    <div class="text-red-400 text-sm">${m.username || 'Anonymous Bearer'} — ${new Date(m.time).toLocaleString()}</div>
+                    <div class="mt-3 text-lg">${m.text}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function postMessage() {
+            const input = document.getElementById('messageInput');
+            const nameInput = document.getElementById('username');
+            const text = input.value.trim();
+            if (!text) return;
+
+            messages.push({
+                username: nameInput.value.trim() || "Anonymous Holder",
+                text: text,
+                time: Date.now()
+            });
+
+            localStorage.setItem('crimsonVault', JSON.stringify(messages));
+            input.value = '';
+            loadMessages();
         }
 
         // Blood rain
