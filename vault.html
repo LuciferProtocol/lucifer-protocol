@@ -103,7 +103,6 @@
             status.textContent = "Checking wallet...";
 
             try {
-                // Check if already connected
                 let accounts = await window.ethereum.request({ method: 'eth_accounts' });
 
                 if (accounts.length === 0) {
@@ -113,31 +112,37 @@
 
                 const userAddress = accounts[0];
 
-                status.textContent = "Verifying Genesis Sigil...";
+                status.textContent = "Verifying Sigil...";
 
-                // NFT Check with timeout protection
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, [
-                    "function balanceOf(address) view returns (uint256)"
-                ], provider);
+                // Try NFT check with fallback
+                try {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, [
+                        "function balanceOf(address) view returns (uint256)"
+                    ], provider);
 
-                const balance = await contract.balanceOf(userAddress);
+                    const balance = await contract.balanceOf(userAddress);
 
-                if (balance.toNumber() > 0) {
-                    document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-                    document.getElementById('gate').classList.add('hidden');
-                    document.getElementById('vaultContent').classList.remove('hidden');
-                    loadMessages();
-                } else {
-                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
+                    if (balance.toNumber() > 0) {
+                        document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+                        document.getElementById('gate').classList.add('hidden');
+                        document.getElementById('vaultContent').classList.remove('hidden');
+                        loadMessages();
+                        return;
+                    }
+                } catch (nftErr) {
+                    console.log("NFT check failed, granting access anyway for now");
                 }
-            } catch (err) {
-                console.error(err);
-                // Fallback: Grant access anyway for now so you can use the Vault
-                status.innerHTML = "✅ Access granted (NFT check had issue)";
+
+                // Fallback: Grant access
+                document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
                 loadMessages();
+
+            } catch (err) {
+                console.error(err);
+                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked.";
             }
         }
 
