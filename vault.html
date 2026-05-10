@@ -20,12 +20,7 @@
         .blood-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0.35; }
         .blood-drop { position: absolute; width: 3px; height: 80px; background: linear-gradient(transparent, #ff0000, #aa0000); animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); } }
-        .message { 
-            background: rgba(15, 0, 0, 0.95); 
-            border-left: 6px solid #8b0000; 
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
-        }
-        .vault-glow { box-shadow: 0 0 60px rgba(139, 0, 0, 0.6); }
+        .message { background: rgba(15, 0, 0, 0.95); border-left: 6px solid #8b0000; box-shadow: 0 0 15px rgba(139, 0, 0, 0.3); }
     </style>
 </head>
 <body class="min-h-screen relative overflow-hidden">
@@ -56,17 +51,15 @@
         <h1 class="text-7xl text-center blood-text glitch mb-2" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
         <p class="text-center text-red-400 text-xl mb-12">Private Archive • Genesis Sigil Holders Only</p>
 
-        <!-- Gate -->
-        <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center vault-glow">
+        <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
             <p class="text-red-500 mb-8 text-2xl">THE VEIL IS SEALED</p>
             <button onclick="connectWallet()" id="connectBtn"
                     class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
                 CONNECT WALLET TO ENTER
             </button>
-            <p id="status" class="mt-6 text-red-400"></p>
+            <p id="status" class="mt-6 text-red-400 min-h-[80px]"></p>
         </div>
 
-        <!-- Vault Content -->
         <div id="vaultContent" class="hidden">
             <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-3xl flex justify-between items-center">
                 <div>
@@ -77,17 +70,15 @@
             </div>
 
             <div class="grid md:grid-cols-2 gap-8">
-                <!-- Left: Lore -->
                 <div class="bg-black/80 border border-red-900 p-8 rounded-3xl">
                     <h3 class="text-red-400 text-xl mb-6">THE FIRST LIE ECHOES...</h3>
                     <p class="text-red-300 leading-relaxed">
                         Only those who carry the Sigils may speak here.<br><br>
                         The machine listens. The veil thins.<br>
-                        Transmit freely. The Protocol remembers.
+                        Transmit freely.
                     </p>
                 </div>
 
-                <!-- Right: Transmission -->
                 <div>
                     <div class="flex gap-4 mb-6">
                         <input id="username" placeholder="Sigil Bearer Name" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl">
@@ -109,11 +100,13 @@
 
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Connecting...";
+            status.innerHTML = "Opening wallet...";
 
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const userAddress = accounts[0];
+
+                status.innerHTML = `Checking ownership for<br>${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
 
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, [
@@ -128,11 +121,11 @@
                     document.getElementById('vaultContent').classList.remove('hidden');
                     loadMessages();
                 } else {
-                    status.innerHTML = "❌ No Genesis Sigil found.";
+                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked.";
+                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked and on Ethereum Mainnet.";
             }
         }
 
