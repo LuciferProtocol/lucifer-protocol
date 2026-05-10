@@ -132,7 +132,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Connection failed.<br>Unlock MetaMask and try again.";
+                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked.";
             }
         }
 
@@ -141,7 +141,6 @@
             document.getElementById('vaultContent').classList.add('hidden');
         }
 
-        // Message System
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
@@ -175,7 +174,6 @@
             loadMessages();
         }
 
-        // Blood Rain
         let rainPlaying = true;
         function toggleRain() {
             rainPlaying = !rainPlaying;
