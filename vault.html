@@ -58,17 +58,10 @@
 
         <div id="gate" class="max-w-lg mx-auto bg-black/95 border-4 border-red-900 p-16 rounded-3xl text-center vault-glow">
             <p class="text-red-500 mb-10 text-3xl">THE VEIL IS SEALED</p>
-            
             <button onclick="connectWallet()" id="connectBtn"
-                    class="w-full py-10 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-3xl font-bold tracking-widest mb-4">
+                    class="w-full py-10 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-3xl font-bold tracking-widest">
                 CONNECT WALLET TO ENTER
             </button>
-            
-            <button onclick="enterAnyway()" 
-                    class="w-full py-6 bg-zinc-800 hover:bg-zinc-700 border border-red-500 text-red-400 text-xl">
-                ENTER ANYWAY (QUICK ACCESS)
-            </button>
-
             <p id="status" class="mt-8 text-red-400"></p>
         </div>
 
@@ -82,7 +75,6 @@
             </div>
 
             <div class="grid md:grid-cols-2 gap-8">
-                <!-- Lore Panel -->
                 <div class="bg-black/90 border border-red-900 p-10 rounded-3xl">
                     <h3 class="text-red-400 text-2xl mb-8">THE FIRST LIE ECHOES...</h3>
                     <p class="text-red-300 leading-relaxed text-lg">
@@ -93,7 +85,6 @@
                     </p>
                 </div>
 
-                <!-- Transmission Area -->
                 <div>
                     <div class="flex gap-4 mb-8">
                         <input id="username" placeholder="YOUR SIGIL NAME" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl text-lg">
@@ -113,25 +104,29 @@
     <script>
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Connecting...";
+            status.textContent = "Checking wallet...";
 
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                // First check if already connected
+                let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+
+                // If not connected, ask for permission
+                if (accounts.length === 0) {
+                    status.textContent = "Opening wallet...";
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                }
+
                 const userAddress = accounts[0];
 
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
                 loadMessages();
-            } catch (err) {
-                status.innerHTML = "❌ Failed.<br>Use ENTER ANYWAY below.";
-            }
-        }
 
-        function enterAnyway() {
-            document.getElementById('gate').classList.add('hidden');
-            document.getElementById('vaultContent').classList.remove('hidden');
-            loadMessages();
+            } catch (err) {
+                console.error(err);
+                status.innerHTML = "❌ Failed to connect.<br>Please unlock MetaMask and try again.";
+            }
         }
 
         function disconnectWallet() {
