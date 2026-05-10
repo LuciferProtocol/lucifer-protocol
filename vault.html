@@ -6,7 +6,6 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -51,41 +50,20 @@
         <h1 class="text-7xl text-center blood-text glitch mb-2" data-text="CRIMSON VAULT">CRIMSON VAULT</h1>
         <p class="text-center text-red-400 text-xl mb-12">Private Archive • Genesis Sigil Holders Only</p>
 
-        <div id="gate" class="max-w-lg mx-auto bg-black/90 border-4 border-red-900 p-12 rounded-3xl text-center">
-            <p class="text-red-500 mb-8 text-2xl">THE VEIL IS SEALED</p>
-            <button onclick="connectWallet()" id="connectBtn"
-                    class="w-full py-8 bg-red-900 hover:bg-red-700 border-2 border-red-500 text-2xl font-bold tracking-widest">
-                CONNECT WALLET TO ENTER
-            </button>
-            <p id="status" class="mt-6 text-red-400"></p>
-        </div>
+        <!-- Direct Access for Testing -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-black/70 border border-red-900 p-12 rounded-3xl text-center">
+                <h2 class="text-5xl text-green-400 mb-6">✅ ACCESS GRANTED</h2>
+                <p class="text-green-300 text-xl">Welcome to the Crimson Vault, Genesis Holder.</p>
+                <p class="mt-8 text-red-400">This is the real private section.</p>
 
-        <div id="vaultContent" class="hidden">
-            <div class="mb-8 bg-black/70 border border-red-900 p-6 rounded-3xl flex justify-between items-center">
-                <div>
-                    <span class="text-green-400">✓ VERIFIED GENESIS HOLDER</span><br>
-                    <span id="walletAddress" class="font-mono text-sm"></span>
-                </div>
-                <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-500">DISCONNECT</button>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-black/80 border border-red-900 p-8 rounded-3xl">
-                    <h3 class="text-red-400 text-xl mb-6">THE FIRST LIE ECHOES...</h3>
-                    <p class="text-red-300 leading-relaxed">
-                        Only those who carry the Sigils may speak here.<br><br>
-                        The machine listens. The veil thins.<br>
-                        Transmit freely.
-                    </p>
-                </div>
-
-                <div>
+                <div class="mt-12">
                     <div class="flex gap-4 mb-6">
                         <input id="username" placeholder="Sigil Bearer Name" class="flex-1 bg-zinc-950 border border-red-700 p-6 rounded-2xl">
                         <input id="messageInput" placeholder="Transmit your truth..." class="flex-[3] bg-zinc-950 border border-red-700 p-6 rounded-2xl">
                         <button onclick="postMessage()" class="px-12 bg-red-900 hover:bg-red-700 border border-red-500 font-bold text-xl">TRANSMIT</button>
                     </div>
-                    <div id="messages" class="space-y-6 max-h-[60vh] overflow-y-auto"></div>
+                    <div id="messages" class="space-y-6 max-h-[50vh] overflow-y-auto"></div>
                 </div>
             </div>
         </div>
@@ -96,35 +74,6 @@
     </footer>
 
     <script>
-        async function connectWallet() {
-            const status = document.getElementById('status');
-            status.textContent = "Connecting...";
-
-            try {
-                let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length === 0) {
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                }
-
-                const userAddress = accounts[0];
-
-                // TEMPORARY - Skip NFT check so you can enter
-                document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-                document.getElementById('gate').classList.add('hidden');
-                document.getElementById('vaultContent').classList.remove('hidden');
-                loadMessages();
-
-            } catch (err) {
-                console.error(err);
-                status.innerHTML = "❌ Connection failed.<br>Make sure MetaMask is unlocked.";
-            }
-        }
-
-        function disconnectWallet() {
-            document.getElementById('gate').classList.remove('hidden');
-            document.getElementById('vaultContent').classList.add('hidden');
-        }
-
         let messages = JSON.parse(localStorage.getItem('crimsonVault')) || [];
 
         function loadMessages() {
@@ -179,6 +128,7 @@
         window.onload = () => {
             for (let i = 0; i < 30; i++) createBloodDrop();
             setInterval(createBloodDrop, 80);
+            loadMessages();
         };
     </script>
 </body>
