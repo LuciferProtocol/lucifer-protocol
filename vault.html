@@ -6,6 +6,7 @@
     <title>LUCIFER PROTOCOL — CRIMSON VAULT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Creepster&display=swap');
         body { background: #050000; color: #ddd; font-family: 'VT323', monospace; }
@@ -108,7 +109,7 @@
             status.textContent = "Opening MetaMask...";
 
             try {
-                // Direct request - should force popup
+                // Direct request - most reliable
                 const accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
@@ -128,11 +129,11 @@
                     document.getElementById('vaultContent').classList.remove('hidden');
                     loadMessages();
                 } else {
-                    status.innerHTML = "❌ No Genesis Sigil found.";
+                    status.innerHTML = "❌ No Genesis Sigil found in this wallet.";
                 }
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ MetaMask did not open.<br>Make sure it is unlocked and try again.";
+                status.innerHTML = "❌ MetaMask did not open.<br>Please make sure MetaMask is unlocked and try again.";
             }
         }
 
