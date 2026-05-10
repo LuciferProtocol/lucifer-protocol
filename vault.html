@@ -101,17 +101,13 @@
             status.textContent = "Connecting...";
 
             try {
-                // First try to get already connected accounts
-                let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-
-                if (accounts.length === 0) {
-                    status.textContent = "Requesting permission...";
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                }
+                // Direct and simple
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
 
                 const userAddress = accounts[0];
 
-                // Success - enter vault
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
