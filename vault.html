@@ -101,14 +101,14 @@
             status.textContent = "Connecting...";
 
             try {
-                let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length === 0) {
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                }
+                // Simple and reliable
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
 
                 const userAddress = accounts[0];
 
-                // Grant access (NFT check skipped for reliability)
+                // Grant access (we'll add NFT check later once stable)
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
@@ -116,7 +116,7 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Failed to connect.<br>Make sure MetaMask is unlocked.";
+                status.innerHTML = "❌ Failed to connect.<br>Unlock MetaMask and try again.";
             }
         }
 
