@@ -96,43 +96,19 @@
     </footer>
 
     <script>
-        const CONTRACT_ADDRESS = "0x7fcb24d9a11b3b376d2416586a8b270aed4dfb16";
-
         async function connectWallet() {
             const status = document.getElementById('status');
-            status.textContent = "Checking wallet...";
+            status.textContent = "Connecting...";
 
             try {
                 let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-
                 if (accounts.length === 0) {
-                    status.textContent = "Opening wallet...";
                     accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 }
 
                 const userAddress = accounts[0];
 
-                // Try NFT check but don't block
-                try {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const contract = new ethers.Contract(CONTRACT_ADDRESS, [
-                        "function balanceOf(address) view returns (uint256)"
-                    ], provider);
-
-                    const balance = await contract.balanceOf(userAddress);
-
-                    if (balance.toNumber() > 0) {
-                        document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-                        document.getElementById('gate').classList.add('hidden');
-                        document.getElementById('vaultContent').classList.remove('hidden');
-                        loadMessages();
-                        return;
-                    }
-                } catch (e) {
-                    console.log("NFT check skipped");
-                }
-
-                // Fallback access
+                // Grant access (NFT check skipped for reliability)
                 document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('vaultContent').classList.remove('hidden');
@@ -140,7 +116,7 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerHTML = "❌ Failed.<br>Unlock MetaMask and try again.";
+                status.innerHTML = "❌ Failed to connect.<br>Make sure MetaMask is unlocked.";
             }
         }
 
